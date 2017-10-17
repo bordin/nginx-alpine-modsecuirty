@@ -1,9 +1,9 @@
 FROM alpine:3.5
 
-LABEL maintainer="NGINX Docker Maintainers <docker-maint@nginx.com>"
+LABEL maintainer="bordin@live.com"
 
 ENV NGINX_VERSION 1.12.1
-
+ENV TZ=Asia/Bangkok
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& export CONFIG="\
 		--prefix=/etc/nginx \
@@ -66,13 +66,14 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 		libxslt-dev \
 		gd-dev \
 		geoip-dev \
-	&& apk add --no-cache --virtual .libmodsecurity-deps \
-		pcre-dev \
-		libxml2-dev \
+		\
 		git \
 		libtool \
 		automake \
 		autoconf \
+	&& apk add --no-cache --virtual .libmodsecurity-deps \
+		pcre-dev \
+		libxml2-dev \
 		g++ \
 		flex \
 		bison \
@@ -150,10 +151,6 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& rm -rf /usr/src/nginx-$NGINX_VERSION \
 	&& ln -s /usr/local/modsecurity/lib/libmodsecurity.* /usr/local/lib/ \
 	\
-	# Bring in gettext so we can get `envsubst`, then throw
-	# the rest away. To do this, we need to install `gettext`
-	# then move `envsubst` out of the way so `gettext` can
-	# be deleted completely, then move `envsubst` back.
 	&& apk add --no-cache --virtual .gettext gettext \
 	&& mv /usr/bin/envsubst /tmp/ \
 	\
@@ -168,11 +165,11 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& apk del .gettext \
 	&& mv /tmp/envsubst /usr/local/bin/ \
 	\
-	# forward request and error logs to docker log collector
 	&& ln -sf /dev/stdout /var/log/nginx/access.log \
 	&& ln -sf /dev/stderr /var/log/nginx/error.log \
 	&& rm -rf /usr/src/ModSecurity \
-	&& rm -rf /usr/src/ModSecurity-nginx/
+	&& rm -rf /usr/src/ModSecurity-nginx/ \
+	&& rm -rf /var/cache/apk/*
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.vh.default.conf /etc/nginx/conf.d/default.conf
